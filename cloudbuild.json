@@ -1,0 +1,31 @@
+{
+    "steps": [
+      {
+        "name": "gcr.io/cloud-builders/docker",
+        "args": [
+          "install"
+        ]
+      },
+      {
+        "name": "gcr.io/cloud-builders/docker",
+        "args": [
+          "run",
+          "build"
+        ]
+      },
+      {
+        "name": "gcr.io/cloud-builders/gcloud",
+        "args": [
+          "functions",
+          "deploy",
+          "${_FUNCTION_NAME_}",
+          "--source=./build",
+          "--allow-unauthenticated",
+          "--trigger-http",
+          "--runtime=python39",
+          "--region=europe-west1",
+          "--entry-point=login"
+        ]
+      }
+    ]
+  }

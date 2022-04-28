@@ -1,7 +1,7 @@
 {
     "steps": [
       {
-        "name": "gcr.io/cloud-builders/docker",
+        "name": "gcr.io/cloud-builders/pip",
         "args": [
           "install"
         ]

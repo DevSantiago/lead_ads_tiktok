@@ -104,10 +104,10 @@ def login():
         return "Éste método no es permitido para la URL en ejecución"
 
 
-@app.route("/")
-def main():
-    return "<p>Hola!</p>"
+# @app.route("/")
+# def main():
+#     return "<p>Hola!</p>"
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# if __name__ == "__main__":
+#     app.run()

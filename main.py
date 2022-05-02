@@ -20,7 +20,7 @@ def send_to_crm(lead):
 
 
 @app.route("/endpoint", methods=['POST'])
-def login():
+def login(self):
 
     countries = [ 
         "DE",

@@ -18,7 +18,7 @@ def send_to_crm(lead):
 
     return response
 
-
+@staticmethod
 @app.route("/", methods=['POST'])
 def login():
 

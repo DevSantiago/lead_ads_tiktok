@@ -19,8 +19,7 @@ def send_to_crm(lead):
     return response
 
 
-@app.route("/endpoint", methods=['POST'])
-@staticmethod
+@app.route("/", methods=['POST'])
 def login():
 
     countries = [ 

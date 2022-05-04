@@ -6,7 +6,7 @@
           "functions",
           "deploy",
           "${_FUNCTION_NAME_}",
-          "--source=./build",
+          "--source=.",
           "--allow-unauthenticated",
           "--trigger-http",
           "--runtime=python39",

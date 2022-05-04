@@ -21,7 +21,7 @@ def send_to_crm(lead):
 
 @app.route("/", methods=['POST'])
 @staticmethod
-def login():
+def login(test="test"):
 
     countries = [ 
         "DE",

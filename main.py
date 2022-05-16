@@ -11,16 +11,16 @@ def login(self = "self"):
 
     unformatted_lead = {
         "email": lead_data["data"]["lead_data"]["email"],
-        "gender": lead_data["data"]["lead_data"]["gender"],
-        "language": lead_data["data"]["lead_data"]["language"],
-        "country": lead_data["data"]["lead_data"]["country"],
+        "gender": lead_data["data"]["lead_data"]["gender"], # TODO add logic to accept any variant
+        "language": lead_data["data"]["lead_data"]["language"], # TODO add logic to accept any variant
+        "country": lead_data["data"]["lead_data"]["country"], # TODO add logic to accept any variant
         "campaign": lead_data["data"]["meta_data"]["campaign_name"]
     }
 
     formatted_lead = formatter(unformatted_lead)
     result = send_to_crm(formatted_lead)
 
-    print(result) # TODO remove
+    print(result)
 
     return "200 OK"
 
@@ -62,20 +62,23 @@ def formatter(unformatted_lead):
     return formatted_lead
 
 def send_to_crm(lead):
-    # TODO actually send to Camper CRM
     query_params = "&TOKEN=" + get_token() + "&MAIL=" + urllib.parse.quote(lead["mail"]) + "&LANG=" + lead["lang_code"] \
         + "&COUNTRYID=" + lead["country_code"] + "&GENDER=" + lead["gender_code"] + "&ORIGIN=TikTok_Lead_Ads" \
         + "&CAMPAIGN=" + urllib.parse.quote(lead["campaign"]) + "&SOURCE_CHANNEL=tiktok"
 
+    final_url = ""
+
     if lead["country_exists"]:
         url_eu_us_ca = "https://campaigns.camper.com/optiext/optiextension.dll" \
         "?ID=QtSxtXlJxNuTw7GcjZQ_klVb%2BstS4L_sQF0BAM2ZOK7GPb5QU2IJKHNxCexS7IxV0FwFVi5T26BQQn"
-        return url_eu_us_ca + query_params
+        final_url = url_eu_us_ca + query_params
 
     else: 
         ur_leftover_countries = "https://campaigns.camper.com/optiext/optiextension.dll" \
         "?ID=7YU9oH6NNvTHawdqYXu2LFrNbyXPcUMuvSFJ%2BhTTgdBF%2BKlZQONzOTFsrXIZuCH3bduH7_xKa0"
-        return ur_leftover_countries + query_params
+        final_url = ur_leftover_countries + query_params
+
+    # TODO make a get request to final_url and return the response
 
 def get_token():
     load_dotenv()

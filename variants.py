@@ -1,3 +1,9 @@
+question_variants_by_param = {
+	"GENDER": ["Sexe", "Género", "Geschlecht", "Φύλο", "Gender", "Genere", "性別", "пол", "เพศ", "CİNSİYET", "性别", "性別", "Pol"],
+	"COUNTRYID": ["País", "Land", "Χώρα", "Country", "Pays", "Paese", "国", "국가", "Kraj", "Страна", "ประเทศ", "Ülke", "&#22269;", "Država"],
+	"LANG": ["Idioma", "Sprache", "Γλώσσα", "Language", "Langue", "Lingua", "言語", "언어", "Taal", "Język", "язык", "ภาษา", "DİL", "&#35328;&#35486;", "語言", "Jezik"]
+}
+
 lang_id_by_language = {
         "CA": "Català",
         "CO": "Español",

@@ -1,6 +1,6 @@
 from flask import Flask, request
 from dotenv import load_dotenv
-from variants import lang_id_by_language, language_variants_by_gender_code, language_variants_by_country_code
+from variants import lang_id_by_language, language_variants_by_gender_code, language_variants_by_country_code, question_variants_by_param
 import urllib.parse, hashlib, time, os
 
 app = Flask(__name__)
@@ -11,9 +11,9 @@ def login(self = "self"):
 
     unformatted_lead = {
         "email": lead_data["data"]["lead_data"]["email"],
-        "gender": lead_data["data"]["lead_data"]["gender"], # TODO add logic to accept any variant
-        "language": lead_data["data"]["lead_data"]["language"], # TODO add logic to accept any variant
-        "country": lead_data["data"]["lead_data"]["country"], # TODO add logic to accept any variant
+        "gender": lead_data["data"]["lead_data"].get(get_lead_key("GENDER", lead_data["data"]["lead_data"]), "U"),
+        "language": lead_data["data"]["lead_data"].get(get_lead_key("LANG", lead_data["data"]["lead_data"]), "EN"),
+        "country": lead_data["data"]["lead_data"].get(get_lead_key("COUNTRYID", lead_data["data"]["lead_data"]), "ES"),
         "campaign": lead_data["data"]["meta_data"]["campaign_name"]
     }
 
@@ -23,6 +23,13 @@ def login(self = "self"):
     print(result)
 
     return "200 OK"
+
+def get_lead_key(key_to_retrieve, lead_data):
+    for lead_key, values in lead_data.items():
+        if lead_key in question_variants_by_param[key_to_retrieve]:
+            return lead_key
+    
+    return None
 
 def formatter(unformatted_lead):
     formatted_lead = {
@@ -77,6 +84,8 @@ def send_to_crm(lead):
         ur_leftover_countries = "https://campaigns.camper.com/optiext/optiextension.dll" \
         "?ID=7YU9oH6NNvTHawdqYXu2LFrNbyXPcUMuvSFJ%2BhTTgdBF%2BKlZQONzOTFsrXIZuCH3bduH7_xKa0"
         final_url = ur_leftover_countries + query_params
+
+    return final_url # TODO remove
 
     # TODO make a get request to final_url and return the response
 

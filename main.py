@@ -1,35 +1,66 @@
 from flask import Flask, request
 from dotenv import load_dotenv
 from variants import lang_id_by_language, language_variants_by_gender_code, language_variants_by_country_code, question_variants_by_param
-import urllib.parse, hashlib, time, os
-
+import urllib.parse, hashlib, time, os, requests    
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
 def login(self = "self"):  
+
     lead_data = request.get_json()
-
-    unformatted_lead = {
-        "email": lead_data["data"]["lead_data"]["email"],
-        "gender": lead_data["data"]["lead_data"].get(get_lead_key("GENDER", lead_data["data"]["lead_data"]), "U"),
-        "language": lead_data["data"]["lead_data"].get(get_lead_key("LANG", lead_data["data"]["lead_data"]), "EN"),
-        "country": lead_data["data"]["lead_data"].get(get_lead_key("COUNTRYID", lead_data["data"]["lead_data"]), "ES"),
-        "campaign": lead_data["data"]["meta_data"]["campaign_name"]
-    }
-
-    formatted_lead = formatter(unformatted_lead)
-    result = send_to_crm(formatted_lead)
-
-    print(result)
-
-    return "200 OK"
-
-def get_lead_key(key_to_retrieve, lead_data):
-    for lead_key, values in lead_data.items():
-        if lead_key in question_variants_by_param[key_to_retrieve]:
-            return lead_key
+    counter = 0
+    gender = ""
+    lang = ""
+    countryid = ""
     
-    return None
+    try:
+        for key, values in lead_data["data"]["lead_data"].items():
+            if counter != 0:
+                if key in question_variants_by_param['GENDER']:
+                    gender = key
+                elif key in question_variants_by_param['COUNTRYID']:
+                    countryid = key
+                elif key in question_variants_by_param['LANG']:
+                    lang = key
+
+            counter += 1
+
+        unformatted_lead = {
+            "email": lead_data["data"]["lead_data"]["email"],
+            "gender": lead_data["data"]["lead_data"][gender], # agregar el género dependiendo de la traducción
+            "language": lead_data["data"]["lead_data"][lang], # agregar el lenguaje dependiendo de la traducción
+            "country": lead_data["data"]["lead_data"][countryid], # agregar la ciudad dependiendo de la traducción
+            "campaign": lead_data["data"]["meta_data"]["campaign_name"]
+        }
+
+        formatted_lead = formatter(unformatted_lead)
+        result = send_to_crm(formatted_lead)
+
+        ok = result.status_code
+        ok_headers = result.headers["content-type"]
+        if ok and ok_headers is ["200", "application/json"]:
+            #return "200 OK"
+            print(result.status_code)
+            print(result.headers["content-type"])
+            print(result.text)
+        else:
+            #return "400 Bad request"
+            print(result.status_code)
+            print(result.headers["content-type"])
+            print(result.text)
+
+        return "200 OK - Record has been entered!"
+    except:
+        return "The record could not be entered!"
+    
+
+# def get_lead_key(key_to_retrieve, lead_data):
+#     for lead_key, values in lead_data.items():
+#         if lead_key in question_variants_by_param[key_to_retrieve]:
+#             print(lead_key)
+#             #return lead_key
+    
+    #return None
 
 def formatter(unformatted_lead):
     formatted_lead = {
@@ -69,7 +100,7 @@ def formatter(unformatted_lead):
     return formatted_lead
 
 def send_to_crm(lead):
-    query_params = "&TOKEN=" + get_token() + "&MAIL=" + urllib.parse.quote(lead["mail"]) + "&LANG=" + lead["lang_code"] \
+    query_params = "&TOKEN=" + get_token() + "&MAIL=" + lead["mail"] + "&LANG=" + lead["lang_code"] \
         + "&COUNTRYID=" + lead["country_code"] + "&GENDER=" + lead["gender_code"] + "&ORIGIN=TikTok_Lead_Ads" \
         + "&CAMPAIGN=" + urllib.parse.quote(lead["campaign"]) + "&SOURCE_CHANNEL=tiktok"
 
@@ -85,9 +116,11 @@ def send_to_crm(lead):
         "?ID=7YU9oH6NNvTHawdqYXu2LFrNbyXPcUMuvSFJ%2BhTTgdBF%2BKlZQONzOTFsrXIZuCH3bduH7_xKa0"
         final_url = ur_leftover_countries + query_params
 
-    return final_url # TODO remove
-
     # TODO make a get request to final_url and return the response
+    send = requests.post(final_url)
+    return send
+
+
 
 def get_token():
     load_dotenv()

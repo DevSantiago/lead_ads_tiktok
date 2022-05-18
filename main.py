@@ -5,66 +5,49 @@ import urllib.parse, hashlib, time, os, requests
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
-def login(self = "self"):  
-
-    lead_data = request.get_json()
-    counter = 0
-    gender = ""
-    lang = ""
-    countryid = ""
-    
+def process_request(self = "self"):
     try:
-        for key, values in lead_data["data"]["lead_data"].items():
-            if counter != 0:
-                if key in question_variants_by_param['GENDER']:
-                    gender = key
-                elif key in question_variants_by_param['COUNTRYID']:
-                    countryid = key
-                elif key in question_variants_by_param['LANG']:
-                    lang = key
-
-            counter += 1
-
-        unformatted_lead = {
-            "email": lead_data["data"]["lead_data"]["email"],
-            "gender": lead_data["data"]["lead_data"][gender], # agregar el género dependiendo de la traducción
-            "language": lead_data["data"]["lead_data"][lang], # agregar el lenguaje dependiendo de la traducción
-            "country": lead_data["data"]["lead_data"][countryid], # agregar la ciudad dependiendo de la traducción
-            "campaign": lead_data["data"]["meta_data"]["campaign_name"]
-        }
-
+        unformatted_lead = get_unformatted_lead(request.get_json())
         formatted_lead = formatter(unformatted_lead)
         result = send_to_crm(formatted_lead)
 
-        ok = result.status_code
-        ok_headers = result.headers["content-type"]
-        if ok and ok_headers is ["200", "application/json"]:
-            #return "200 OK"
-            print(result.status_code)
-            print(result.headers["content-type"])
-            print(result.text)
+        if result.status_code == 200 and result.headers["content-type"] == "application/json":
+            print("Lead successfully sent to CRM")
         else:
-            #return "400 Bad request"
-            print(result.status_code)
-            print(result.headers["content-type"])
-            print(result.text)
+            print("CRM rejected the lead")
 
-        return "200 OK - Record has been entered!"
+        return "200 OK"
+
     except:
-        return "The record could not be entered!"
-    
+        return "The record could not be submitted"
 
-# def get_lead_key(key_to_retrieve, lead_data):
-#     for lead_key, values in lead_data.items():
-#         if lead_key in question_variants_by_param[key_to_retrieve]:
-#             print(lead_key)
-#             #return lead_key
-    
-    #return None
+def get_unformatted_lead(lead_data):
+    gender_key = ""
+    lang_key = ""
+    countryid_key = ""
+
+    # Find the corresponding key for each question based on language variants    
+    for key, values in lead_data["data"]["lead_data"].items():
+        if key in question_variants_by_param['GENDER']:
+            gender_key = key
+        elif key in question_variants_by_param['COUNTRYID']:
+            countryid_key = key
+        elif key in question_variants_by_param['LANG']:
+            lang_key = key
+
+    formatted_lead = {
+        "email": lead_data["data"]["lead_data"]["email"],
+        "gender": lead_data["data"]["lead_data"][gender_key],
+        "language": lead_data["data"]["lead_data"][lang_key], 
+        "country": lead_data["data"]["lead_data"][countryid_key],
+        "campaign": lead_data["data"]["meta_data"]["campaign_name"]
+    }
+
+    return formatted_lead
 
 def formatter(unformatted_lead):
     formatted_lead = {
-        "mail": unformatted_lead["email"],
+        "email": unformatted_lead["email"],
         "campaign": unformatted_lead["campaign"]
     }
 
@@ -100,7 +83,7 @@ def formatter(unformatted_lead):
     return formatted_lead
 
 def send_to_crm(lead):
-    query_params = "&TOKEN=" + get_token() + "&MAIL=" + lead["mail"] + "&LANG=" + lead["lang_code"] \
+    query_params = "&TOKEN=" + get_token() + "&MAIL=" + urllib.parse.quote(lead["email"]) + "&LANG=" + lead["lang_code"] \
         + "&COUNTRYID=" + lead["country_code"] + "&GENDER=" + lead["gender_code"] + "&ORIGIN=TikTok_Lead_Ads" \
         + "&CAMPAIGN=" + urllib.parse.quote(lead["campaign"]) + "&SOURCE_CHANNEL=tiktok"
 
@@ -116,11 +99,9 @@ def send_to_crm(lead):
         "?ID=7YU9oH6NNvTHawdqYXu2LFrNbyXPcUMuvSFJ%2BhTTgdBF%2BKlZQONzOTFsrXIZuCH3bduH7_xKa0"
         final_url = ur_leftover_countries + query_params
 
-    # TODO make a get request to final_url and return the response
-    send = requests.post(final_url)
-    return send
+    print(final_url) # Left here for debugging purposes
 
-
+    return requests.post(final_url)
 
 def get_token():
     load_dotenv()

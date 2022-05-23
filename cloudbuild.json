@@ -11,7 +11,7 @@
           "--trigger-http",
           "--runtime=python39",
           "--region=europe-west1",
-          "--entry-point=login"
+          "--entry-point=process_request"
         ]
       }
     ]

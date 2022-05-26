@@ -75,18 +75,18 @@ def formatter(unformatted_lead):
     country_exists = False
 
     for key, values in language_variants_by_country_code.items(): 
-        if unformatted_lead["country"] in values:
+        if unformatted_lead["country"].strip().capitalize() in values:
             country_code = key 
             country_exists = True
             break   
 
     for key, values in lang_id_by_language.items():
-        if unformatted_lead["language"] in values:
+        if unformatted_lead["language"].strip().capitalize() in values:
             lang_code = key
             break
 
     for key, values in language_variants_by_gender_code.items():
-        if unformatted_lead["gender"] in values:
+        if unformatted_lead["gender"].strip().capitalize() in values:
             gender_code = key
             break
 

@@ -4,8 +4,10 @@ from dotenv import load_dotenv
 import urllib.parse
 import requests
 import hashlib
+import string
 import time
 import os
+
 
 
 """We initialize the Flask application in a variable."""
@@ -21,16 +23,17 @@ def process_request(self = "self"):
     try:
         unformatted_lead = get_unformatted_lead(request.get_json())
         formatted_lead = formatter(unformatted_lead)
-        result = send_to_crm(formatted_lead)
+        #result = send_to_crm(formatted_lead)
 
-        if result.status_code == 200 and result.headers["content-type"] == "application/json":
-            print("Lead successfully sent to CRM")
-        else:
-            print("CRM rejected the lead")
-
+        # if result.status_code == 200 and result.headers["content-type"] == "application/json":
+        #     print("Lead successfully sent to CRM")
+        # else:
+        #     print("CRM rejected the lead")
+        print(formatted_lead)
         return "200 OK"
     except:
         return "The record could not be submitted"
+
 
 def get_unformatted_lead(lead_data):
 
@@ -59,6 +62,7 @@ def get_unformatted_lead(lead_data):
 
     return formatted_lead
 
+
 def formatter(unformatted_lead):
 
     """We format the lead."""
@@ -75,18 +79,18 @@ def formatter(unformatted_lead):
     country_exists = False
 
     for key, values in language_variants_by_country_code.items(): 
-        if unformatted_lead["country"].strip().capitalize() in values:
+        if string.capwords(unformatted_lead["country"]) in values:
             country_code = key 
             country_exists = True
             break   
 
     for key, values in lang_id_by_language.items():
-        if unformatted_lead["language"].strip().capitalize() in values:
+        if unformatted_lead["language"] in values:
             lang_code = key
             break
 
     for key, values in language_variants_by_gender_code.items():
-        if unformatted_lead["gender"].strip().capitalize() in values:
+        if string.capwords(unformatted_lead["gender"]).lstrip() in values:
             gender_code = key
             break
 
@@ -99,11 +103,12 @@ def formatter(unformatted_lead):
 
     return formatted_lead
 
+
 def send_to_crm(lead):
 
     """We structure the query parameters."""
 
-    query_params = "&TOKEN=" +get_token()+"&MAIL="+urllib.parse.quote(lead["email"])+"&LANG="+ lead["lang_code"] \
+    query_params = "&TOKEN="+get_token()+"&MAIL="+urllib.parse.quote(lead["email"])+"&LANG="+ lead["lang_code"] \
         +"&COUNTRYID="+lead["country_code"]+"&GENDER="+lead["gender_code"]+"&ORIGIN=TikTok_Lead_Ads" \
         +"&CAMPAIGN="+urllib.parse.quote(lead["campaign"])+"&SOURCE_CHANNEL=tiktok"
 
@@ -123,6 +128,7 @@ def send_to_crm(lead):
 
     return requests.post(final_url)
 
+
 def get_token():
 
     """We initialize our environment variables to get the token."""
@@ -135,6 +141,7 @@ def get_token():
     concat = MY_USER_ENV_VAR + MY_PWD_ENV_VAR+str(now)
     concat_hashed = hashlib.sha256(concat.encode('utf-8')).hexdigest()
     return MY_USER_ENV_VAR+":"+str(now)+":"+concat_hashed
+    
 
 if __name__ == "__main__":
     app.run()

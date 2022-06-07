@@ -1,34 +1,42 @@
 from variants import lang_id_by_language, language_variants_by_gender_code, language_variants_by_country_code, question_variants_by_param
+from firestore_service import Firestore
 from flask import Flask, request
 from dotenv import load_dotenv
 import urllib.parse
 import requests
 import hashlib
 import string
+import pprint
 import time
 import os
-
 
 
 """We initialize the Flask application in a variable."""
 
 app = Flask(__name__)
 
-
 @app.route("/", methods=["POST"])
 def process_request(self = "self"):
 
     """We receive the lead from our endpoint."""
-
+    
     try:
-        unformatted_lead = get_unformatted_lead(request.get_json())
-        formatted_lead = formatter(unformatted_lead)
-        #result = send_to_crm(formatted_lead)
+        firestore = Firestore()
 
-        # if result.status_code == 200 and result.headers["content-type"] == "application/json":
-        #     print("Lead successfully sent to CRM")
-        # else:
-        #     print("CRM rejected the lead")
+        lead_request = request.get_json()
+        firestore.set(lead_request)
+        unformatted_lead = get_unformatted_lead(lead_request)
+        formatted_lead = formatter(unformatted_lead)
+        result = send_to_crm(formatted_lead)
+        if result.status_code == 200 and result.headers["content-type"] == "application/json":
+            print("Lead successfully sent to CRM")
+            print(formatted_lead)
+            firestore.update(lead_request)
+            
+        else:
+            print("CRM rejected the lead")
+            print(formatted_lead)
+
         print(formatted_lead)
         return "200 OK"
     except:
@@ -43,7 +51,6 @@ def get_unformatted_lead(lead_data):
     lang_key = ""
     countryid_key = ""
 
-
     for key, values in lead_data["data"]["lead_data"].items():
         if key in question_variants_by_param['GENDER']:
             gender_key = key
@@ -52,15 +59,18 @@ def get_unformatted_lead(lead_data):
         elif key in question_variants_by_param['LANG']:
             lang_key = key
 
-    formatted_lead = {
-        "email": lead_data["data"]["lead_data"]["email"],
-        "gender": lead_data["data"]["lead_data"][gender_key],
-        "language": lead_data["data"]["lead_data"][lang_key], 
-        "country": lead_data["data"]["lead_data"][countryid_key],
-        "campaign": lead_data["data"]["meta_data"]["campaign_name"]
-    }
+    try:
+        formatted_lead = {
+            "email": lead_data["data"]["lead_data"]["email"],
+            "gender": lead_data["data"]["lead_data"][gender_key],
+            "language": lead_data["data"]["lead_data"][lang_key], 
+            "country": lead_data["data"]["lead_data"][countryid_key],
+            "campaign": lead_data["data"]["meta_data"]["campaign_name"]
+        }
 
-    return formatted_lead
+        return formatted_lead
+    except:
+        return ValueError('Pasó algo en formatted')
 
 
 def formatter(unformatted_lead):
@@ -79,17 +89,20 @@ def formatter(unformatted_lead):
     country_exists = False
 
     for key, values in language_variants_by_country_code.items(): 
+        normalized_values = list(map(normalize_value, values))
         if string.capwords(unformatted_lead["country"]) in values:
             country_code = key 
             country_exists = True
             break   
 
     for key, values in lang_id_by_language.items():
-        if unformatted_lead["language"] in values:
+        normalized_values = list(map(normalize_value, values))
+        if string.capwords(unformatted_lead["language"]) in values:
             lang_code = key
             break
 
     for key, values in language_variants_by_gender_code.items():
+        normalized_values = list(map(normalize_value, values))
         if string.capwords(unformatted_lead["gender"]).lstrip() in values:
             gender_code = key
             break
@@ -102,6 +115,17 @@ def formatter(unformatted_lead):
     })
 
     return formatted_lead
+
+
+def normalize_value(value):
+    return string.capwords(value).strip()
+
+
+def update_firestore():
+    credentials, project = google.auth.default()
+    db = firestore.Client()
+
+
 
 
 def send_to_crm(lead):

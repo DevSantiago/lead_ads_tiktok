@@ -1,3 +1,5 @@
 requests
 python-dotenv
 flask
+google-cloud-firestore
+google-auth
